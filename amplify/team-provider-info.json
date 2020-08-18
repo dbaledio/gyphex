@@ -10,6 +10,17 @@
             "StackName": "amplify-gyphex-dev-154151",
             "StackId": "arn:aws:cloudformation:us-west-2:522210716333:stack/amplify-gyphex-dev-154151/d93b83b0-e0da-11ea-8b63-0a54494481e5",
             "AmplifyAppId": "dr56zgh3q2l57"
+        },
+        "categories": {
+            "hosting": {
+                "amplifyhosting": {
+                    "appId": "dr56zgh3q2l57",
+                    "type": "cicd"
+                }
+            },
+            "auth": {
+                "gyphexb87053c0": {}
+            }
         }
     }
 }
