@@ -1,64 +1,96 @@
+// src/App.js
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import { Auth } from 'aws-amplify';
-import { withAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react'
 
-import { Button } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
+import { API, graphqlOperation, Auth } from 'aws-amplify'
+// import uuid to create a unique client ID
+import uuid from 'uuid/v4'
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  appBarSpacer: {
-    marginRight: theme.spacing(2),
-    flexGrow: 1,
-  },
-}));
+import { listItems as ListItems } from './graphql/queries'
+// import the mutation
+import { createItem as CreateItem } from './graphql/mutations'
 
+// src/App.js, import the new component
+import { withAuthenticator } from 'aws-amplify-react'
 
-async function signOut() {
+const CLIENT_ID = uuid()
+
+class App extends React.Component {
+  // define some state to hold the data returned from the API
+  state = {
+    name: '', category: '', description: '', items: []
+  }
+
+  // execute the query in componentDidMount
+  async componentDidMount() {
+    const user = await Auth.currentAuthenticatedUser()
+    console.log('user:', user)
+    console.log('user info:', user.signInUserSession.idToken.payload)
     try {
-        await Auth.signOut();
-    } catch (error) {
-        console.log('error signing out: ', error);
+      const itemData = await API.graphql(graphqlOperation(ListItems))
+      console.log('itemData:', itemData)
+      this.setState({
+        items: itemData.data.listItems.items
+      })
+    } catch (err) {
+      console.log('error fetching items...', err)
     }
+  }
+  createItem = async() => {
+    const { name, category, description } = this.state
+    if (name === '' || category=='' || description === '') return
+
+    const item = { name, category, description, clientId: CLIENT_ID }
+    const items = [...this.state.items, item]
+    this.setState({
+      items, name: '', category: '', description: ''
+    })
+
+    try {
+      await API.graphql(graphqlOperation(CreateItem, { input: item }))
+      console.log('item created!')
+    } catch (err) {
+      console.log('error creating item...', err)
+    }
+  }
+  onChange = (event) => {
+    this.setState({
+      [event.target.name]: event.target.value
+    })
+  }
+  render() {
+    return (
+      <>
+        <input
+          name='name'
+          onChange={this.onChange}
+          value={this.state.name}
+          placeholder='name'
+        />
+        <input
+          name='category'
+          onChange={this.onChange}
+          value={this.state.catgeory}
+          placeholder='category'
+        />
+        <input
+          name='description'
+          onChange={this.onChange}
+          value={this.state.description}
+          placeholder='description'
+        />
+        <button onClick={this.createItem}>Add Item</button>
+        {
+          this.state.items.map((item, index) => (
+            <div key={index}>
+              <h3>{item.name}</h3>
+              <h5>{item.category}</h5>
+              <p>{item.description}</p>
+            </div>
+          ))
+        }
+      </>
+    )
+  }
 }
 
-function App() {
-  const classes = useStyles();
-
-  return (
-    <div className="App">
-      <AppBar position="static">
-        <Toolbar>
-          <Button variant="contained" color="primary" disableElevation>
-            Go Back
-          </Button>
-          <div className={classes.appBarSpacer}>
-          </div>
-          <AmplifySignOut />
-        </Toolbar>
-      </AppBar>
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
-
-export default withAuthenticator(App, true);
+export default withAuthenticator(App, { includeGreetings: true })
