@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { Component }  from 'react';
 
 import { API, graphqlOperation, Auth } from 'aws-amplify'
 
@@ -8,9 +8,41 @@ import { listItems as ListItems } from './graphql/queries'
 import { createItem as CreateItem } from './graphql/mutations'
 
 // src/App.js, import the new component
-import { withAuthenticator } from 'aws-amplify-react'
+import { withAuthenticator, AmplifyAuthenticator } from '@aws-amplify/ui-react'
 
-class App extends React.Component {
+import ItemCard from './ItemCard'
+import AppBar from './AppBar'
+
+
+
+
+
+
+import { makeStyles } from '@material-ui/core/styles';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
+const useStyles = makeStyles({
+  root: {
+    minWidth: 275,
+  },
+  bullet: {
+    display: 'inline-block',
+    margin: '0 2px',
+    transform: 'scale(0.8)',
+  },
+  title: {
+    fontSize: 14,
+  },
+  pos: {
+    marginBottom: 12,
+  },
+});
+
+
+class App extends Component {
   // define some state to hold the data returned from the API
   state = {
     name: '', category: '', description: '', items: []
@@ -56,11 +88,14 @@ class App extends React.Component {
   render() {
     return (
       <>
+        <AppBar />
+        <Card className={this.props.classes.root}>
+            <CardContent>
         <input
           name='name'
           onChange={this.onChange}
           value={this.state.name}
-          placeholder='iteme'
+          placeholder='item'
         />
         <input
           name='category'
@@ -75,18 +110,29 @@ class App extends React.Component {
           placeholder='notes'
         />
         <button onClick={this.createItem}>Add Item</button>
+        </CardContent>
+<CardActions>
+  <Button size="small">Learn More</Button>
+</CardActions>
+</Card>
         {
-          this.state.items.map((item, index) => (
-            <div key={index}>
-              <h3>{item.name}</h3>
-              <h5>{item.category}</h5>
-              <p>{item.description}</p>
-            </div>
-          ))
+          this.state.items.map((item, index) => <ItemCard key={index} name={item.name} category={item.category} description={item.description} />
+          )
         }
       </>
     )
   }
 }
 
-export default withAuthenticator(App, { includeGreetings: true })
+//export default withAuthenticator(App)
+
+
+export default () => {
+  const classes = useStyles();
+  return (
+    <AmplifyAuthenticator>
+      <App classes = {classes}/>
+    </AmplifyAuthenticator>
+  )
+}
+  
